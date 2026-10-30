@@ -6,5 +6,17 @@ data/raw/
 data/processed/
 models/
 outputs/
+data/external/
+data/mapping_profiles/
+data/workspaces/
 .DS_Store
 .env
+.streamlit/secrets.toml
+mlruns/
+mlflow.db
+mlflow.db-*
+
+# Kilo cleanup
+_cleanup_trash/
+venv/
+v2/data/raw/

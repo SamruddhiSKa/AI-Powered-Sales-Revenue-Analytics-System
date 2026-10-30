@@ -1,0 +1,5 @@
+step,rows_in,rows_out,count_affected
+drop_exact_duplicates,37749,37562,187
+impute_customer_age_gender,37562,37562,752
+recover_drop_unit_price,37562,37562,376
+fix_corrupt_discounts,37562,37562,75

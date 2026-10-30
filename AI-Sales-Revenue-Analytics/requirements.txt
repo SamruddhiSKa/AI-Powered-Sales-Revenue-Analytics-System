@@ -1,10 +1,4 @@
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-sqlalchemy
-psycopg2-binary
-jupyter
-ipython
-python-dotenv
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.2
+scipy==1.17.1

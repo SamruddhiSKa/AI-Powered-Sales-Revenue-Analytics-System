@@ -1,0 +1,231 @@
+# AI-Powered Sales & Revenue Analytics System
+
+This repository contains a portfolio-ready analytics project for a fictional retail company, RetailX. It demonstrates the full pipeline: synthetic data generation, data cleaning, SQL database design, exploratory analysis, feature engineering, customer segmentation, sales forecasting, and Power BI dashboard preparation.
+
+Quick start
+1. Create and activate a virtual environment:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+2. Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+3. Generate synthetic data and run cleaning:
+
+```powershell
+python src/data_generator.py
+python src/data_cleaning.py
+```
+
+4. Create features and run ML scripts:
+
+```powershell
+python src/feature_engineering.py
+python src/customer_segmentation.py
+python src/sales_forecasting.py
+```
+
+5. Generate EDA figures and KPI summaries:
+
+```powershell
+python src/eda.py
+```
+
+6. Load PostgreSQL for a deliberate full reload (after creating `.env` from `.env.example`):
+
+```powershell
+python src/load_to_postgres.py --replace
+```
+
+For a deliberate full reload, use `--replace`; add `--create-database` only
+when the PostgreSQL database itself should be created:
+
+```powershell
+python src/load_to_postgres.py --create-database --replace
+```
+
+Run the complete local pipeline from the project root:
+
+```powershell
+python scripts/run_pipeline.py
+```
+
+Launch the Streamlit dashboard:
+
+```powershell
+streamlit run app.py
+```
+
+Run automated tests:
+
+```powershell
+pytest tests -q
+```
+
+Optional MLflow tracking:
+
+```powershell
+pip install -r requirements-optional.txt
+mlflow ui --backend-store-uri sqlite:///./mlflow.db
+```
+
+After installing the optional dependency, attach a forecast run to the local
+MLflow tracking store with:
+
+```powershell
+python src/sales_forecasting.py --mlflow
+```
+
+Build and launch the local containerized dashboard:
+
+```powershell
+docker compose up --build
+```
+
+The Compose file includes PostgreSQL for an explicit local database service,
+but the dashboard itself reads the cleaned CSV unless database-backed loading
+is configured. Set `PGPASSWORD` in a local `.env`; do not commit that file.
+
+Project structure
+
+Architecture
+
+```mermaid
+flowchart LR
+    A[Seeded synthetic generator] --> B[Raw CSV]
+    B --> C[Cleaning and validation]
+    C --> D[Processed CSV]
+    D --> E[Feature engineering]
+    D --> F[EDA summaries and figures]
+    D --> G[PostgreSQL loader]
+    E --> H[K-Means segmentation]
+    E --> I[Chronological forecasting]
+    D --> J[Streamlit dashboard]
+    H --> J
+    I --> J
+```
+
+Implementation status
+
+| Component | Status | Evidence |
+|---|---|---|
+| Local data pipeline | Implemented and verified | `scripts/run_pipeline.py` |
+| Data-quality validation | Implemented and tested | `src/validation.py`, `tests/` |
+| Customer segmentation | Implemented and evaluated | silhouette and Davies-Bouldin outputs |
+| Forecasting | Implemented and chronologically evaluated | `outputs/insights/forecast_metrics.csv` |
+| Streamlit dashboard | Implemented and browser-smoke-tested | `app.py` |
+| PostgreSQL integration | Implemented; database execution pending local server | `src/load_to_postgres.py` |
+| MLflow | Optional integration implemented and locally verified | `src/mlflow_tracking.py`, local `mlflow.db` |
+| Docker | Configuration validated; image build not executed here | `Dockerfile`, `docker-compose.yml` |
+| Power BI | Specification only; `.pbix` not included | `powerbi/` |
+```
+
+AI-Sales-Revenue-Analytics/
+├── data/
+│   ├── raw/
+│   └── processed/
+├── notebooks/
+├── sql/
+├── src/
+├── models/
+├── outputs/
+├── powerbi/
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+Useful scripts
+- `src/data_generator.py` — generates realistic synthetic sales data (~10k–50k records).
+- `src/data_cleaning.py` — cleans and validates the raw dataset.
+- `src/load_to_postgres.py` — loads cleaned data into PostgreSQL (requires `.env` with credentials).
+- `src/feature_engineering.py` — prepares customer- and time-level features.
+- `src/customer_segmentation.py` — K-Means segmentation and cluster summaries.
+- `src/sales_forecasting.py` — monthly forecasting with naive, seasonal-naive, Linear Regression, and Random Forest comparisons.
+- `src/eda.py` — business-focused figures and summary outputs.
+
+Outputs
+- `outputs/figures/` — monthly trends, category/region comparisons, discount analysis, and customer distribution.
+- `outputs/insights/` — KPI, category, region, cluster, and forecast summaries.
+- `outputs/predictions/` — actual versus predicted monthly sales.
+- `models/` — K-Means and forecasting model artifacts.
+
+The generated data, outputs, models, local environment, and secrets are
+ignored by Git. They can be recreated with `python scripts/run_pipeline.py`.
+
+## Dataset sources and importing external retail data
+
+The default source is the fictional synthetic RetailX dataset. The dashboard
+also supports an explicit CSV upload workflow with column mapping, strict
+parsing, duplicate detection, return preservation, and an import validation
+report before activation. Imported datasets are labelled with their selected
+provenance. Profit and margin are shown as unavailable when the source does
+not provide cost/profit data.
+
+The public-data audit covers the [UCI Online Retail dataset](https://archive.ics.uci.edu/dataset/352/online-retail),
+which contains 541,909 UK online-retail transaction rows from 2010-12-01 to
+2011-12-09 and is licensed CC BY 4.0. UCI identifies `InvoiceNo`, `StockCode`,
+`Description`, `Quantity`, `InvoiceDate`, `UnitPrice`, `CustomerID`, and
+`Country`; cancellation invoices and negative quantities must remain visible
+in the import report. See [DATASETS.md](docs/DATASETS.md) and
+[data_import.py](src/data_import.py) for the policy and implementation.
+
+The import workflow is deliberately source-agnostic: review the suggested
+mapping in the dashboard, select the five required fields, optionally set a
+delimiter and date format, validate the report, and then activate the data.
+Accepted data is stored in an isolated local workspace under `data/workspaces`
+and can be exported as a filtered CSV. This local adapter is single-user
+development storage; it does not claim PostgreSQL-grade multi-user controls.
+The optional XLSX path uses `openpyxl` when installed from
+`requirements-optional.txt`.
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [SECURITY.md](docs/SECURITY.md),
+and [VERIFICATION.md](docs/VERIFICATION.md) for module boundaries and verified
+limitations.
+
+## Streamlit application
+
+`app.py` provides an Executive Overview, Sales Analysis, Customer Analytics, Forecasting, and
+Data Quality page. It reads the cleaned CSV for a self-contained local demo;
+PostgreSQL remains available through `src/load_to_postgres.py` for database
+integration. Forecasting compares naive, seasonal-naive, Linear Regression,
+and Random Forest models using expanding-window validation followed by one
+untouched chronological holdout. Lagged models forecast recursively so actual
+test-period sales are not used as future features. Metrics include MAE, RMSE,
+and R²; results are a baseline on synthetic data and must not be treated as a
+guarantee.
+
+## Validation and optional tracking
+
+`src/validation.py` checks required fields, nulls, dates, numeric ranges,
+duplicates, and financial consistency. Core tests are in `tests/` and do not
+require PostgreSQL credentials. Forecast tests cover chronological splitting,
+target/horizon alignment, leakage prevention, baselines, metrics, insufficient
+history, finite output, and reproducibility. MLflow is optional; install it
+from `requirements-optional.txt` when experiment tracking is needed.
+
+## Verified forecasting result
+
+The current synthetic dataset has 48 calendar months and produces 46 usable
+monthly feature rows after the two lag warm-up rows. The final evaluation is a
+12-month holdout (January–December 2023) after a 34-month training period.
+The model selected by three expanding-window validation folds of three months
+is the `Naive` baseline. On the final holdout, the selected baseline has
+MAE $25,378.70, RMSE $28,195.25, and R² -4.2684. The negative R² is retained:
+it means this forecast is worse than predicting the holdout mean under that
+metric, and it is evidence that this synthetic series is not yet predictable
+enough for a production claim. Final holdout comparisons are written to
+`outputs/insights/forecast_metrics.csv`.
+
+Power BI
+The data model, DAX measures, page layout, relationships, and visual recommendations are documented in `powerbi/dax_measures.md` and `powerbi/POWERBI_BUILD_GUIDE.md`. Power BI Desktop is required to save the final `.pbix` report.
+
+Documentation
+- `docs/PROJECT_DOCUMENTATION.md` — technical project documentation.
+- `docs/INTERVIEW_PREPARATION.md` — concise explanations of technical and business decisions.

@@ -1,0 +1,7 @@
+# Local Python environment for the workspace
+.venv/
+
+# Generated archive and local editor/runtime files
+*.pyc
+__pycache__/
+.pytest_cache/
